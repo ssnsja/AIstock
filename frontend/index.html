@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 股票分析看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center font-sans p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8 border border-gray-100">
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">📈 AI 股票分析看板</h1>
+            <p class="text-gray-500 mt-2 text-sm">Powered by FastAPI, Supabase & Qwen AI</p>
+        </div>
+
+        <div class="flex space-x-3 mb-6">
+            <input type="text" id="ticker-input" placeholder="输入股票代码 (如 NVDA, TSLA)" 
+                   class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-xl focus:ring-blue-500 focus:border-blue-500 block w-full p-3 uppercase transition shadow-sm">
+            <button onclick="analyzeStock()" 
+                    class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-xl text-lg px-6 py-3 transition shadow-md">
+                开始分析
+            </button>
+        </div>
+
+        <div id="loading" class="hidden flex justify-center items-center py-10 space-x-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="text-gray-500 font-medium">大模型正在全网检索并深度分析中，请稍候...</span>
+        </div>
+
+        <div id="error-msg" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-4 font-medium">
+            请求失败，请检查后端 FastAPI (127.0.0.1:8000) 是否已启动！
+        </div>
+
+        <div id="result-card" class="hidden animate-fade-in-up">
+            <div class="flex justify-between items-start mb-6 pb-6 border-b border-gray-100">
+                <div>
+                    <h2 id="stock-ticker" class="text-4xl font-black text-gray-900">NVDA</h2>
+                    <p class="text-gray-500 mt-1">最新实时参考价</p>
+                </div>
+                <div class="text-right">
+                    <div id="stock-price" class="text-4xl font-bold text-green-600">$0.00</div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                    基本面深度总结
+                </h3>
+                <p id="stock-summary" class="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl text-justify border border-gray-100">
+                    这里是分析内容...
+                </p>
+            </div>
+
+            <div class="flex space-x-6">
+                <div>
+                    <span class="text-sm text-gray-500 block mb-1">市场情绪</span>
+                    <span id="stock-sentiment" class="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-green-500 shadow-sm">乐观</span>
+                </div>
+                <div>
+                    <span class="text-sm text-gray-500 block mb-1">风险等级</span>
+                    <span id="stock-risk" class="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-yellow-500 shadow-sm">中等</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeStock() {
+            const ticker = document.getElementById('ticker-input').value.trim().toUpperCase();
+            if (!ticker) return alert('请输入股票代码！');
+
+            // 切换 UI 状态：显示加载中，隐藏结果和报错
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result-card').classList.add('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+
+            try {
+                // 发送 POST 请求到你的 FastAPI 后端！
+                const response = await fetch('http://127.0.0.1:8000/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticker: ticker })
+                });
+
+                if (!response.ok) throw new Error('网络响应失败');
+                
+                // 解析完美的 JSON 数据
+                const data = await response.json();
+
+                // 将数据填入页面元素
+                document.getElementById('stock-ticker').textContent = data.ticker;
+                document.getElementById('stock-price').textContent = `$${data.price.toFixed(2)}`;
+                document.getElementById('stock-summary').textContent = data.analysis.summary;
+                
+                // 处理情绪标签颜色
+                const sentimentEl = document.getElementById('stock-sentiment');
+                sentimentEl.textContent = data.analysis.sentiment;
+                sentimentEl.className = 'px-4 py-1.5 rounded-full text-sm font-bold text-white shadow-sm ' + 
+                    (data.analysis.sentiment === '乐观' || data.analysis.sentiment === 'Bullish' ? 'bg-green-500' : 
+                     data.analysis.sentiment === '悲观' || data.analysis.sentiment === 'Bearish' ? 'bg-red-500' : 'bg-gray-500');
+
+                // 处理风险标签颜色
+                const riskEl = document.getElementById('stock-risk');
+                riskEl.textContent = data.analysis.risk_level;
+                riskEl.className = 'px-4 py-1.5 rounded-full text-sm font-bold text-white shadow-sm ' + 
+                    (data.analysis.risk_level === '高' || data.analysis.risk_level === 'High' ? 'bg-red-500' : 
+                     data.analysis.risk_level === '中' || data.analysis.risk_level === 'Medium' ? 'bg-yellow-500' : 'bg-green-500');
+
+                // 显示结果卡片
+                document.getElementById('result-card').classList.remove('hidden');
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('error-msg').classList.remove('hidden');
+            } finally {
+                // 隐藏加载动画
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // 支持回车键触发搜索
+        document.getElementById('ticker-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') analyzeStock();
+        });
+    </script>
+</body>
+</html>
