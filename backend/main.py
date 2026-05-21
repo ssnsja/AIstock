@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from fastapi.responses import FileResponse
 import uvicorn
 from backend.models import AnalyzeRequest, AnalyzeResponse
 from backend.services import analyze_with_llm, save_analysis_to_db
@@ -18,7 +19,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+analyze_router = APIRouter()
+app.include_router(analyze_router, prefix="/api")
 
+# ================= 新增：前端托管 =================
+# 2. 把根目录 "/" 绑定给你的 index.html
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("frontend/index.html")
 @app.post("/api/analyze", response_model=AnalyzeResponse)
 async def analyze_stock_endpoint(request: AnalyzeRequest):
     """
