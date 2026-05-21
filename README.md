@@ -8,8 +8,8 @@
 ## 交付清单 (Deliverables)
 
 ### 1. 在线访问 URL
-- **Live Demo:** [👉 点击访问 AI 股票分析面板](https://your-app-name.onrender.com) *(⚠️ 提交前请将此处替换为你在 Render.com 上的实际部署链接)*
-- **GitHub Repository:** [👉 点击访问源码](https://github.com/ssnsja/AIstock) *(⚠️ 请替换为你的 GitHub 仓库链接)*
+
+- **GitHub Repository:** [👉 点击访问源码](https://github.com/ssnsja/AIstock)
 
 ### 2. Prompt 代码与 LLM JSON 强制格式化策略
 为了确保 LLM 稳定且严格地输出符合前端要求的 JSON 数据格式，不仅在 Prompt 中明确了结构，还在 API 调用层开启了原生 JSON 模式（JSON Mode）。
